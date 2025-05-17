@@ -2,9 +2,9 @@ import { authService } from './auth.service.js'
 import { logger } from '../../services/logger.service.js'
 
 export async function login(req, res) {
-	const { email, password, profileImg } = req.body
+	const { email, password } = req.body
 	try {
-		const user = await authService.login(email, password, profileImg)
+		const user = await authService.login(email, password)
 		const loginToken = authService.getLoginToken(user)
         
 		logger.info('User login: ', user)

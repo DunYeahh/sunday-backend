@@ -16,7 +16,7 @@ export const authService = {
 async function login(email, password) {
 	logger.debug(`auth.service - login with email: ${email}`)
 
-	const user = await userService.getByUsername(email)
+	const user = await userService.getByEmail(email)
 	if (!user) return Promise.reject('Invalid email or password')
 
 	// TODO: un-comment for real login
@@ -34,7 +34,7 @@ async function signup({ username, password, firstName, lastName, isAdmin }) {
 	logger.debug(`auth.service - signup with username: ${username}, fullname: ${firstName} ${lastName}`)
 	if (!username || !password || !firstName || !lastName) return Promise.reject('Missing required signup information')
 
-	const userExist = await userService.getByUsername(username)
+	const userExist = await userService.getByEmail(username)
 	if (userExist) return Promise.reject('Username already taken')
 
 	const hash = await bcrypt.hash(password, saltRounds)
