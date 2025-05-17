@@ -1,0 +1,393 @@
+import { ObjectId } from 'mongodb'
+
+import { logger } from '../../services/logger.service.js'
+import { makeId } from '../../services/util.service.js'
+import { dbService } from '../../services/db.service.js'
+import { asyncLocalStorage } from '../../services/als.service.js'
+
+const PAGE_SIZE = 3
+
+export const boardService = {
+	query,
+	getById,
+	saveBoards,
+	add,
+	update,
+	remove,
+	createGroup,
+	updateGroup,
+	removeGroup,
+	createColumn,
+    updateColumn,
+    removeColumn,
+    createTask,
+    removeTask,
+    addTaskUpdate,
+    addColumnValue,
+	updateColumnValue,
+    removeColumnValue,
+
+}
+
+async function query(account) {
+	try {
+		const criteria = _buildCriteria(account)
+
+		const collection = await dbService.getCollection('board')
+
+		const boards = await collection.find(criteria)
+			.sort({ pos: 1 }) 
+			.project({ _id: 1, name: 1, isStarred: 1 })
+			.toArray()
+
+		return boards
+
+	} catch (err) {
+		logger.error('cannot find boards', err)
+		throw err
+	}
+}
+
+async function getById(boardId) {
+	try {
+		
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+		const collection = await dbService.getCollection('board')
+		const board = await collection.findOne(criteria)
+
+		board.createdAt = board._id.getTimestamp()
+		return board
+	} catch (err) {
+		logger.error(`while finding board ${boardId}`, err)
+		throw err
+	}
+}
+
+async function saveBoards(miniBoards) {
+	try {
+		const collection = await dbService.getCollection('board')
+
+		const bulkOps = miniBoards.map((miniBoard, idx) => ({
+			updateOne: {
+				filter: { _id: ObjectId.createFromHexString(miniBoard._id) },
+				update: {
+					$set: {
+						pos: idx,
+						name: miniBoard.name,
+						isStarred: miniBoard.isStarred
+					}
+				}
+			}
+		}))
+
+		await collection.bulkWrite(bulkOps)
+
+		return miniBoards
+	} catch (err) {
+		logger.error(`Failed to reorder boards`, err)
+		throw err
+	}
+}
+
+async function remove(boardId) {
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		const res = await collection.deleteOne(criteria)
+
+		if (res.deletedCount === 0) throw (`cannot find board`)
+
+		//reindex
+		const boards = await collection.find({}, { projection: { _id: 1 } }).sort({ pos: 1 }).toArray()
+		const bulkOps = boards.map((board, idx) => ({
+			updateOne: {
+				filter: { _id: board._id },
+				update: { $set: { pos: idx } }
+			}
+		}))
+		if (bulkOps.length) await collection.bulkWrite(bulkOps)
+
+		return boardId
+	} catch (err) {
+		logger.error(`cannot remove board ${boardId}`, err)
+		throw err
+	}
+}
+
+async function add(board, loggedinUser) {
+	try {
+		const collection = await dbService.getCollection('board')
+		const lastBoard = await collection.find().sort({ pos: -1 }).limit(1).toArray()
+		const nextPos = lastBoard.length ? lastBoard[0].pos + 1 : 0
+
+		const boardToSave = {
+		name: board.name,
+		activities: board.activities,
+		columns: board.columns,
+		groups: board.groups,
+		isStarred: false,
+		pos: nextPos,
+		account: board.account || loggedinUser.account || '',
+		createdBy: loggedinUser._id,
+		members: [{ _id: loggedinUser._id, permission: 'editor'}]
+	}
+		await collection.insertOne(boardToSave)
+
+		return boardToSave
+	} catch (err) {
+		logger.error('cannot insert board', err)
+		throw err
+	}
+}
+
+async function update(board) {
+
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(board._id) }
+
+		const collection = await dbService.getCollection('board')
+		const { _id, ...boardWithoutId } = board
+		await collection.updateOne(criteria, { $set: boardWithoutId })
+
+		return board
+	} catch (err) {
+		logger.error(`cannot update board ${board._id}`, err)
+		throw err
+	}
+}
+
+async function createGroup(group, boardId, isTop, loggedinUser) {
+	const groupToSave = {
+		id: group.id,
+		name: group.name,
+		isCollapse: group.isCollapse,
+		color: group.color,
+		tasks: group.tasks,
+		isStarred: false,
+		createdBy: loggedinUser._id,
+		createdAt: Date.now()
+	}
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		isTop ? await collection.updateOne(criteria, { $push: { groups: { $each: [groupToSave], $position: 0 }} }) : await collection.updateOne(criteria, { $push: { groups: groupToSave } })
+
+		return groupToSave
+	} catch (err) {
+		logger.error(`cannot add grpup ${group.id}`, err)
+		throw err
+	}
+}
+
+async function updateGroup(group, boardId, groupId) {
+	console.log(group)
+	
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne(criteria, { $set: { "groups.$[group]": group } }, { arrayFilters: [{ "group.id": groupId }] })
+
+		return group
+	} catch (err) {
+		logger.error(`cannot update group ${group.id}`, err)
+		throw err
+	}
+}
+
+async function removeGroup(groupId, boardId) {
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne(criteria, { $pull: { groups: { id: groupId } } })
+
+		return groupId
+	} catch (err) {
+		logger.error(`cannot remove group ${groupId}`, err)
+		throw err
+	}
+}
+
+async function createColumn(column, boardId, loggedinUser) {
+	
+	const columnToSave = {
+		id: column.id,
+		name: column.name,
+		width: column.width,
+		type: column.type,
+		createdBy: loggedinUser._id,
+		createdAt: column.createdAt
+	}
+
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+console.log('criteria:', criteria)
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne(criteria, { $push: { columns: columnToSave } })
+
+		return columnToSave
+	} catch (err) {
+		logger.error(`cannot add column ${column.id}`, err)
+		throw err
+	}
+}
+
+async function updateColumn(column, boardId) {
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne(criteria, { $set: { "columns.$[column]": column } }, { arrayFilters: [{ "column.id": column.id }] })
+
+		return column
+	} catch (err) {
+		logger.error(`cannot update column ${column.id}`, err)
+		throw err
+	}
+}
+
+async function removeColumn(columnId, boardId) {
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne(criteria, { $pull: { columns: { id: columnId } } })
+
+		return columnId
+	} catch (err) {
+		logger.error(`cannot remove column ${columnId}`, err)
+		throw err
+	}
+}
+
+async function createTask(task, boardId, groupId, isTop, loggedinUser) {
+	const taskToSave = {
+		id: task.id,
+		columnValues: task.columnValues,
+		createdBy: loggedinUser._id,
+		createdAt: Date.now(),
+		updates: task.updates
+	}
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		isTop 
+		? await collection.updateOne( criteria, { $push: { "groups.$[group].tasks": {$each: [taskToSave], $position: 0 }}}, {arrayFilters: [{ "group.id": groupId }]}) 
+		: await collection.updateOne( criteria, { $push: { "groups.$[group].tasks": taskToSave }},{ arrayFilters: [{ "group.id": groupId }]})
+
+		return taskToSave
+	} catch (err) {
+		logger.error(`cannot add task ${task.id}`, err)
+		throw err
+	}
+}
+
+async function removeTask(taskId, groupId, boardId) {
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne(criteria, { $pull: { "groups.$[group].tasks": {id: taskId} }},{ arrayFilters: [{ "group.id": groupId }] })
+
+		return taskId
+	} catch (err) {
+		logger.error(`cannot remove task ${taskId}`, err)
+		throw err
+	}
+}
+
+async function addTaskUpdate(update, boardId, groupId, taskId) {
+	// console.log(update)
+	const updateToSave = {
+		id: update.id,
+		createdBy: update.createdBy,
+		createdAt: Date.now(),
+		txt: update.txt
+	}
+	// console.log(updateToSave)
+
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne( criteria, { $push: { "groups.$[group].tasks.$[task].updates": {$each: [updateToSave], $position: 0 }}}, {arrayFilters: [{ "group.id": groupId}, {"task.id": taskId }]}) 
+
+		return updateToSave
+	} catch (err) {
+		logger.error(`cannot send update ${update.id}`, err)
+		throw err
+	}
+}
+
+async function addColumnValue(value, boardId, groupId, taskId, colId) {
+	const columnValueToSave = {
+		colId: colId,
+		value: value
+	}
+
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne( criteria, { $push: { "groups.$[group].tasks.$[task].columnValues.$[columnValue]": columnValueToSave }}, 
+			{arrayFilters: [{ "group.id": groupId}, {"task.id": taskId }, {"columnValue.colId": colId }]}) 
+
+		return columnValueToSave
+	} catch (err) {
+		logger.error(`cannot add column value ${value} in column ${colId}`, err)
+		throw err
+	}
+}
+
+async function updateColumnValue(value, boardId, groupId, taskId, colId) {
+	const columnValueToSave = {
+		colId: colId,
+		value: value
+	}
+
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne( criteria, { $set: { "groups.$[group].tasks.$[task].columnValues.$[columnValue]": columnValueToSave }}, 
+			{arrayFilters: [{ "group.id": groupId}, {"task.id": taskId }, {"columnValue.colId": colId }]}) 
+
+		return columnValueToSave
+	} catch (err) {
+		logger.error(`cannot add column value ${value} in column ${colId}`, err)
+		throw err
+	}
+}
+
+async function removeColumnValue(boardId, groupId, taskId, colId) {
+
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne( criteria, { $pull: { "groups.$[group].tasks.$[task].columnValues": { colId } }}, 
+			{arrayFilters: [{ "group.id": groupId}, {"task.id": taskId } ]}) 
+
+		return colId
+	} catch (err) {
+		logger.error(`cannot remove column value in column ${colId}`, err)
+		throw err
+	}
+}
+
+function _buildCriteria(filterBy) {
+	const criteria = {
+		account: { $regex: filterBy, $options: 'i' },
+	}
+
+	return criteria
+}
+
+function _buildSort(filterBy) {
+	if (!filterBy.sortField) return {}
+	return { [filterBy.sortField]: filterBy.sortDir }
+}
