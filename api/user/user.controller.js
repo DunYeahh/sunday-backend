@@ -3,8 +3,9 @@ import {logger} from '../../services/logger.service.js'
 import {socketService} from '../../services/socket.service.js'
 
 export async function getUser(req, res) {
+    const { userId } = req.params
     try {
-        const user = await userService.getById(req.params.id)
+        const user = await userService.getById(userId)
         res.send(user)
     } catch (err) {
         logger.error('Failed to get user', err)
@@ -28,7 +29,7 @@ export async function getUsers(req, res) {
 
 export async function deleteUser(req, res) {
     try {
-        await userService.remove(req.params.id)
+        await userService.remove(req.params.userId)
         res.send({ msg: 'Deleted successfully' })
     } catch (err) {
         logger.error('Failed to delete user', err)
@@ -39,7 +40,7 @@ export async function deleteUser(req, res) {
 export async function updateUser(req, res) {
     try {
         const { boardId } = req.body
-        const userId = req.params.id
+        const userId = req.params.userId
         const savedUser = await userService.update(boardId, userId)
         res.send(savedUser)
     } catch (err) {
