@@ -245,3 +245,19 @@ export async function removeColumnValue(req, res) {
 		res.status(400).send({ err: 'Failed to remove column value' })
 	}
 }
+
+export async function moveTask(req, res) {
+	try {
+		const { body } = req
+		const fromGroupId = body.fromGroupId
+		const toGroupId = body.toGroupId
+		const toIndex = body.toIndex
+		const { boardId, taskId } = req.params
+		const updatedBoard = await boardService.moveTask(taskId, boardId, fromGroupId, toGroupId, toIndex)
+		
+		res.status(200).json(updatedBoard)
+	} catch (err) {
+		logger.error('Failed to move task', err)
+		res.status(400).send({ err: 'Failed to move task' })
+	}
+}

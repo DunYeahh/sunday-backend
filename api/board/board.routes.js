@@ -4,7 +4,7 @@ import { requireAuth } from '../../middlewares/requireAuth.middleware.js'
 import { log } from '../../middlewares/logger.middleware.js'
 
 import { getBoards, getBoardById, saveBoards, createBoard, updateBoard, removeBoard, removeGroup, createGroup, updateGroup, createColumn, updateColumn, removeColumn,
-    createTask, removeTask, addTaskUpdate, addColumnValue, updateColumnValue, removeColumnValue } from './board.controller.js'
+    createTask, removeTask, addTaskUpdate, addColumnValue, updateColumnValue, removeColumnValue, moveTask } from './board.controller.js'
 
 const router = express.Router()
 router.use(log, requireAuth)
@@ -37,6 +37,7 @@ router.post('/:boardId/group/:groupId/task/:taskId/update', addTaskUpdate)
 router.put('/:boardId/group/:groupId/task/:taskId/columnValue/:colId', updateColumnValue)
 router.post('/:boardId/group/:groupId/task/:taskId/columnValue/:colId', addColumnValue)
 router.delete('/:boardId/group/:groupId/task/:taskId/columnValue/:colId', removeColumnValue)
+router.put('/:boardId/task/:taskId', moveTask)
 
 
 

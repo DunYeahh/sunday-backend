@@ -4,6 +4,7 @@ import { logger } from '../../services/logger.service.js'
 import { makeId } from '../../services/util.service.js'
 import { dbService } from '../../services/db.service.js'
 import { asyncLocalStorage } from '../../services/als.service.js'
+import { updateBoard } from './board.controller.js'
 
 const PAGE_SIZE = 3
 
@@ -26,6 +27,7 @@ export const boardService = {
     addColumnValue,
 	updateColumnValue,
     removeColumnValue,
+	moveTask,
 
 }
 
@@ -378,6 +380,34 @@ async function removeColumnValue(boardId, groupId, taskId, colId) {
 		return colId
 	} catch (err) {
 		logger.error(`cannot remove column value in column ${colId}`, err)
+		throw err
+	}
+}
+
+async function moveTask(taskId, boardId, fromGroupId, toGroupId, toIndex) {
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+
+		const board = await collection.findOne(criteria)
+		if (!board) throw new Error('Board not found')
+
+		const fromGroup = board.groups.find(group => group.id === fromGroupId)
+		if (!fromGroup) throw new Error('From group not found')
+
+		const task = fromGroup.tasks.find(task => task.id === taskId)
+		if (!task) throw new Error('Task not found')
+		
+		await collection.updateOne(criteria, {$pull: {"groups.$[fromGroup].tasks": { id: taskId } }},
+			{ arrayFilters: [{ "fromGroup.id": fromGroupId }] })
+
+		const updatedBoard = await collection.updateOne(criteria, { $push: {"groups.$[toGroup].tasks": {$each: [task], $position: toIndex}}},
+			{arrayFilters: [{ "toGroup.id": toGroupId }]})
+
+		return updatedBoard
+	} catch (err) {
+		logger.error(`cannot move task ${taskId}`, err)
 		throw err
 	}
 }
