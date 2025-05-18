@@ -329,12 +329,14 @@ async function addColumnValue(value, boardId, groupId, taskId, colId) {
 		value: value
 	}
 
+	console.log('columnValueToSave in add', columnValueToSave)
+
 	try {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
 
 		const collection = await dbService.getCollection('board')
-		await collection.updateOne( criteria, { $push: { "groups.$[group].tasks.$[task].columnValues.$[columnValue]": columnValueToSave }}, 
-			{arrayFilters: [{ "group.id": groupId}, {"task.id": taskId }, {"columnValue.colId": colId }]}) 
+		await collection.updateOne( criteria, { $push: { "groups.$[group].tasks.$[task].columnValues": columnValueToSave }}, 
+			{arrayFilters: [{ "group.id": groupId}, {"task.id": taskId } ]}) 
 
 		return columnValueToSave
 	} catch (err) {
@@ -348,6 +350,7 @@ async function updateColumnValue(value, boardId, groupId, taskId, colId) {
 		colId: colId,
 		value: value
 	}
+		// console.log('columnValueToSave in update', columnValueToSave)
 
 	try {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
