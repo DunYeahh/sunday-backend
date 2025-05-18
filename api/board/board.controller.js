@@ -1,4 +1,5 @@
 import { logger } from '../../services/logger.service.js'
+import { socketService } from '../../services/socket.service.js'
 import { boardService } from './board.service.js'
 
 export async function getBoards(req, res) {
@@ -47,20 +48,6 @@ export async function createBoard(req, res) {
 	}
 }
 
-export async function updateBoard(req, res) {
-	const { loggedinUser, body: board } = req
-	console.log(board)
-    // const { userId: _id, isAdmin } = loggedinUser
-
-	try {
-		const updatedBoard = await boardService.update(board)
-		res.json(updatedBoard)
-	} catch (err) {
-		logger.error('Failed to update board', err)
-		res.status(400).send({ err: 'Failed to update board' })
-	}
-}
-
 export async function removeBoard(req, res) {
 	try {
 		const { boardId } = req.params
@@ -73,17 +60,39 @@ export async function removeBoard(req, res) {
 	}
 }
 
+export async function updateBoard(req, res) {
+	const { loggedinUser, body: board } = req
+	console.log(board)
+    // const { userId: _id, isAdmin } = loggedinUser
+
+	try {
+		const updatedBoard = await boardService.update(board)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
+	} catch (err) {
+		logger.error('Failed to update board', err)
+		res.status(400).send({ err: 'Failed to update board' })
+	}
+}
+
 export async function createGroup(req, res) {
 	const { loggedinUser, body } = req
 	const { boardId } = req.params
 	const isTop = body.isTop
 	const group = body.group
-
-	console.log(isTop, group)
 	
 	try {
 		const updatedBoard = await boardService.createGroup(group, boardId, isTop, loggedinUser)
-		res.json(updatedBoard)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to add group', err)
 		res.status(400).send({ err: 'Failed to add group' })
@@ -97,8 +106,12 @@ export async function updateGroup(req, res) {
 
 	try {
 		const updatedBoard = await boardService.updateGroup(group, boardId, groupId)
-		console.log(updateBoard)
-		res.json(updatedBoard)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to update group', err)
 		res.status(400).send({ err: 'Failed to update group' })
@@ -107,10 +120,15 @@ export async function updateGroup(req, res) {
 
 export async function removeGroup(req, res) {
 	try {
+		const { loggedinUser } = req
 		const { boardId, groupId } = req.params
-		const removedId = await boardService.removeGroup(groupId, boardId)
+		const updatedBoard = await boardService.removeGroup(groupId, boardId)
 
-		res.status(200).json({ removedId })
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to remove group', err)
 		res.status(400).send({ err: 'Failed to remove group' })
@@ -124,7 +142,12 @@ export async function createColumn(req, res) {
 	
 	try {
 		const updatedBoard = await boardService.createColumn(column, boardId, loggedinUser)
-		res.json(updatedBoard)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to add column', err)
 		res.status(400).send({ err: 'Failed to add column' })
@@ -138,7 +161,12 @@ export async function updateColumn(req, res) {
 
 	try {
 		const updatedBoard = await boardService.updateColumn(column, boardId)
-		res.json(updatedBoard)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to update column', err)
 		res.status(400).send({ err: 'Failed to update column' })
@@ -147,10 +175,15 @@ export async function updateColumn(req, res) {
 
 export async function removeColumn(req, res) {
 	try {
+		const { loggedinUser } = req
 		const { boardId, columnId } = req.params
-		const removedId = await boardService.removeColumn(columnId, boardId)
+		const updatedBoard = await boardService.removeColumn(columnId, boardId)
 
-		res.status(200).json({ removedId })
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to remove column', err)
 		res.status(400).send({ err: 'Failed to remove column' })
@@ -167,7 +200,12 @@ export async function createTask(req, res) {
 
 	try {
 		const updatedBoard = await boardService.createTask(task, boardId, groupId, isTop, loggedinUser)
-		res.json(updatedBoard)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to add task', err)
 		res.status(400).send({ err: 'Failed to add task' })
@@ -176,10 +214,15 @@ export async function createTask(req, res) {
 
 export async function removeTask(req, res) {
 	try {
+		const { loggedinUser } = req
 		const { boardId, groupId, taskId } = req.params
-		const removedId = await boardService.removeTask(taskId, groupId, boardId)
+		const updatedBoard = await boardService.removeTask(taskId, groupId, boardId)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
 		
-		res.status(200).json({ removedId })
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to remove task', err)
 		res.status(400).send({ err: 'Failed to remove task' })
@@ -197,7 +240,12 @@ export async function addTaskUpdate(req, res) {
 
 	try {
 		const updatedBoard = await boardService.addTaskUpdate(update, boardId, groupId, taskId)
-		res.json(updatedBoard)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to send update', err)
 		res.status(400).send({ err: 'Failed to send update' })
@@ -211,7 +259,12 @@ export async function addColumnValue(req, res) {
 
 	try {
 		const updatedBoard = await boardService.addColumnValue(value, boardId, groupId, taskId, colId)
-		res.json(updatedBoard)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to add column value', err)
 		res.status(400).send({ err: 'Failed to add column value' })
@@ -225,7 +278,12 @@ export async function updateColumnValue(req, res) {
 
 	try {
 		const updatedBoard = await boardService.updateColumnValue(value, boardId, groupId, taskId, colId)
-		res.json(updatedBoard)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to update column value', err)
 		res.status(400).send({ err: 'Failed to update column value' })
@@ -238,8 +296,13 @@ export async function removeColumnValue(req, res) {
 	const { boardId, groupId, taskId, colId } = req.params
 
 	try {
-		const removedId = await boardService.removeColumnValue(boardId, groupId, taskId, colId)
-		res.status(200).json({ removedId })
+		const updatedBoard = await boardService.removeColumnValue(boardId, groupId, taskId, colId)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to remove column value', err)
 		res.status(400).send({ err: 'Failed to remove column value' })
@@ -248,13 +311,17 @@ export async function removeColumnValue(req, res) {
 
 export async function moveTask(req, res) {
 	try {
-		const { body } = req
+		const { loggedinUser, body } = req
 		const fromGroupId = body.fromGroupId
 		const toGroupId = body.toGroupId
 		const toIndex = body.toIndex
 		const { boardId, taskId } = req.params
 		const updatedBoard = await boardService.moveTask(taskId, boardId, fromGroupId, toGroupId, toIndex)
 		
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
 		res.status(200).json(updatedBoard)
 	} catch (err) {
 		logger.error('Failed to move task', err)

@@ -151,8 +151,9 @@ async function update(board) {
 		const collection = await dbService.getCollection('board')
 		const { _id, ...boardWithoutId } = board
 		await collection.updateOne(criteria, { $set: boardWithoutId })
-
-		return board
+		
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot update board ${board._id}`, err)
 		throw err
@@ -176,23 +177,23 @@ async function createGroup(group, boardId, isTop, loggedinUser) {
 		const collection = await dbService.getCollection('board')
 		isTop ? await collection.updateOne(criteria, { $push: { groups: { $each: [groupToSave], $position: 0 }} }) : await collection.updateOne(criteria, { $push: { groups: groupToSave } })
 
-		return groupToSave
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot add grpup ${group.id}`, err)
 		throw err
 	}
 }
 
-async function updateGroup(group, boardId, groupId) {
-	console.log(group)
-	
+async function updateGroup(group, boardId, groupId) {	
 	try {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
 
 		const collection = await dbService.getCollection('board')
 		await collection.updateOne(criteria, { $set: { "groups.$[group]": group } }, { arrayFilters: [{ "group.id": groupId }] })
 
-		return group
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot update group ${group.id}`, err)
 		throw err
@@ -206,7 +207,8 @@ async function removeGroup(groupId, boardId) {
 		const collection = await dbService.getCollection('board')
 		await collection.updateOne(criteria, { $pull: { groups: { id: groupId } } })
 
-		return groupId
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot remove group ${groupId}`, err)
 		throw err
@@ -230,7 +232,8 @@ console.log('criteria:', criteria)
 		const collection = await dbService.getCollection('board')
 		await collection.updateOne(criteria, { $push: { columns: columnToSave } })
 
-		return columnToSave
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot add column ${column.id}`, err)
 		throw err
@@ -244,7 +247,8 @@ async function updateColumn(column, boardId) {
 		const collection = await dbService.getCollection('board')
 		await collection.updateOne(criteria, { $set: { "columns.$[column]": column } }, { arrayFilters: [{ "column.id": column.id }] })
 
-		return column
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot update column ${column.id}`, err)
 		throw err
@@ -256,9 +260,10 @@ async function removeColumn(columnId, boardId) {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
 
 		const collection = await dbService.getCollection('board')
-		await collection.updateOne(criteria, { $pull: { columns: { id: columnId } } })
+		collection.updateOne(criteria, { $pull: { columns: { id: columnId } } })
 
-		return columnId
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot remove column ${columnId}`, err)
 		throw err
@@ -281,7 +286,8 @@ async function createTask(task, boardId, groupId, isTop, loggedinUser) {
 		? await collection.updateOne( criteria, { $push: { "groups.$[group].tasks": {$each: [taskToSave], $position: 0 }}}, {arrayFilters: [{ "group.id": groupId }]}) 
 		: await collection.updateOne( criteria, { $push: { "groups.$[group].tasks": taskToSave }},{ arrayFilters: [{ "group.id": groupId }]})
 
-		return taskToSave
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot add task ${task.id}`, err)
 		throw err
@@ -295,7 +301,8 @@ async function removeTask(taskId, groupId, boardId) {
 		const collection = await dbService.getCollection('board')
 		await collection.updateOne(criteria, { $pull: { "groups.$[group].tasks": {id: taskId} }},{ arrayFilters: [{ "group.id": groupId }] })
 
-		return taskId
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot remove task ${taskId}`, err)
 		throw err
@@ -318,7 +325,8 @@ async function addTaskUpdate(update, boardId, groupId, taskId) {
 		const collection = await dbService.getCollection('board')
 		await collection.updateOne( criteria, { $push: { "groups.$[group].tasks.$[task].updates": {$each: [updateToSave], $position: 0 }}}, {arrayFilters: [{ "group.id": groupId}, {"task.id": taskId }]}) 
 
-		return updateToSave
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot send update ${update.id}`, err)
 		throw err
@@ -340,7 +348,8 @@ async function addColumnValue(value, boardId, groupId, taskId, colId) {
 		await collection.updateOne( criteria, { $push: { "groups.$[group].tasks.$[task].columnValues": columnValueToSave }}, 
 			{arrayFilters: [{ "group.id": groupId}, {"task.id": taskId } ]}) 
 
-		return columnValueToSave
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot add column value ${value} in column ${colId}`, err)
 		throw err
@@ -361,7 +370,8 @@ async function updateColumnValue(value, boardId, groupId, taskId, colId) {
 		await collection.updateOne( criteria, { $set: { "groups.$[group].tasks.$[task].columnValues.$[columnValue]": columnValueToSave }}, 
 			{arrayFilters: [{ "group.id": groupId}, {"task.id": taskId }, {"columnValue.colId": colId }]}) 
 
-		return columnValueToSave
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot add column value ${value} in column ${colId}`, err)
 		throw err
@@ -377,7 +387,8 @@ async function removeColumnValue(boardId, groupId, taskId, colId) {
 		await collection.updateOne( criteria, { $pull: { "groups.$[group].tasks.$[task].columnValues": { colId } }}, 
 			{arrayFilters: [{ "group.id": groupId}, {"task.id": taskId } ]}) 
 
-		return colId
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot remove column value in column ${colId}`, err)
 		throw err
@@ -402,9 +413,10 @@ async function moveTask(taskId, boardId, fromGroupId, toGroupId, toIndex) {
 		await collection.updateOne(criteria, {$pull: {"groups.$[fromGroup].tasks": { id: taskId } }},
 			{ arrayFilters: [{ "fromGroup.id": fromGroupId }] })
 
-		const updatedBoard = await collection.updateOne(criteria, { $push: {"groups.$[toGroup].tasks": {$each: [task], $position: toIndex}}},
+		await collection.updateOne(criteria, { $push: {"groups.$[toGroup].tasks": {$each: [task], $position: toIndex}}},
 			{arrayFilters: [{ "toGroup.id": toGroupId }]})
 
+		const updatedBoard = await collection.findOne(criteria)
 		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot move task ${taskId}`, err)
