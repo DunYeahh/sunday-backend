@@ -3,6 +3,7 @@ import path from 'path'
 import cors from 'cors'
 import express from 'express'
 import cookieParser from 'cookie-parser'
+import detect from 'detect-port';
 
 import { authRoutes } from './api/auth/auth.routes.js'
 import { userRoutes } from './api/user/user.routes.js'
@@ -55,7 +56,9 @@ app.get('/*all', (req, res) => {
 })
 
 import { logger } from './services/logger.service.js'
-const port = process.env.PORT || 3030
+
+const desiredPort = process.env.PORT || 3030;
+const port = await detect(desiredPort === 3030 ? 3030 : Number(desiredPort));
 
 server.listen(port, () => {
     logger.info('Server is running on port: ' + port)
