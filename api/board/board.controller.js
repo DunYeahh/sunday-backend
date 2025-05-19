@@ -26,10 +26,16 @@ export async function getBoardById(req, res) {
 }
 
 export async function saveBoards(req, res) {
+	const { loggedinUser } = req
 	const { reorderedBoards } = req.body
 	try {
-		const updatedBoards = await boardService.saveBoards(reorderedBoards)
-		res.json(updatedBoards)
+		const miniBoards = await boardService.saveBoards(reorderedBoards)
+
+		if(miniBoards) {
+			socketService.broadcast({ type:'mini-boards-update', data: miniBoards, userId: loggedinUser._id})
+		}
+
+		res.json(miniBoards)
 	} catch (err) {
 		logger.error('Failed to update boards', err)
 		res.status(400).send({ err: 'Failed to update boards' })
@@ -38,10 +44,14 @@ export async function saveBoards(req, res) {
 
 export async function createBoard(req, res) {
 	const { loggedinUser, body: board } = req
-
 	try {
-		const addedBoard = await boardService.add(board, loggedinUser)
-		res.json(addedBoard)
+		const {miniBoards, newBoard} = await boardService.add(board, loggedinUser)
+
+		if(miniBoards) {
+			socketService.broadcast({ type:'mini-boards-update', data: miniBoards, userId: loggedinUser._id})
+		}
+
+		res.json(newBoard)
 	} catch (err) {
 		logger.error('Failed to add board', err)
 		res.status(400).send({ err: 'Failed to add board' })
@@ -50,10 +60,15 @@ export async function createBoard(req, res) {
 
 export async function removeBoard(req, res) {
 	try {
+		const { loggedinUser } = req
 		const { boardId } = req.params
-		const removedId = await boardService.remove(boardId)
+		const miniBoards = await boardService.remove(boardId, loggedinUser)
 
-		res.status(200).json({ removedId })
+		if(miniBoards) {
+			socketService.broadcast({ type:'mini-boards-update', data: miniBoards, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(miniBoards)
 	} catch (err) {
 		logger.error('Failed to remove board', err)
 		res.status(400).send({ err: 'Failed to remove board' })

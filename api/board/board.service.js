@@ -91,7 +91,7 @@ async function saveBoards(miniBoards) {
 	}
 }
 
-async function remove(boardId) {
+async function remove(boardId, loggedinUser) {
 	try {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
 
@@ -110,7 +110,9 @@ async function remove(boardId) {
 		}))
 		if (bulkOps.length) await collection.bulkWrite(bulkOps)
 
-		return boardId
+		const miniBoards = await query(loggedinUser.account)
+
+		return miniBoards
 	} catch (err) {
 		logger.error(`cannot remove board ${boardId}`, err)
 		throw err
@@ -134,9 +136,13 @@ async function add(board, loggedinUser) {
 		createdBy: loggedinUser._id,
 		members: [{ _id: loggedinUser._id, permission: 'editor'}]
 	}
-		await collection.insertOne(boardToSave)
+		const insertRes = await collection.insertOne(boardToSave)
+		const newBoard = { ...boardToSave, _id: insertRes.insertedId }
 
-		return boardToSave
+		const miniBoards = await query(loggedinUser.account)
+
+		return {miniBoards, newBoard}
+
 	} catch (err) {
 		logger.error('cannot insert board', err)
 		throw err
