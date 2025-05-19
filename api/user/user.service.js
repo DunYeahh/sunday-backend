@@ -31,21 +31,12 @@ async function query(filterBy = {}) {
 
 async function getById(userId) {//filter last visited boards based on date
     try {
-        // var criteria = { _id: ObjectId.createFromHexString(userId) }
 
         const collection = await dbService.getCollection('user')
         const user = await collection.findOne({ _id: ObjectId.createFromHexString(userId) })
         if (!user) throw new Error('User not found')
         delete user.password
 
-        // criteria = { byUserId: userId }
-
-        // user.givenReviews = await reviewService.query(criteria)
-        
-        // user.givenReviews = user.givenReviews.map(review => {
-        //     delete review.byUser
-        //     return review
-        // })
         
         return user
     } catch (err) {
@@ -105,12 +96,12 @@ async function update(viewedBoardId, userId) {
 async function add(user) {
 	try {
 		const userToAdd = {
-			username: user.email,
+			email: user.email,
 			password: user.password,
 			firstName: user.firstName,
 			lastName: user.lastName,
-			profileImg: `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=0D8ABC&color=fff&length=2&rounded=true&bold=true`,
-			isAdmin: user.isAdmin,
+			profileImg: user.profileImg || `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=0D8ABC&color=fff&length=2&rounded=true&bold=true`,
+			role: user.role || 'user',
             lastViewedBoards: []
 		}
 		const collection = await dbService.getCollection('user')

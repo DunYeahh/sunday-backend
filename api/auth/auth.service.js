@@ -28,27 +28,31 @@ async function login(email, password) {
 	return user
 }
 
-async function signup({ username, password, firstName, lastName, isAdmin }) {
+async function signup(email, firstName, lastName, profileImg, password, role) {
 	const saltRounds = 10
 
-	logger.debug(`auth.service - signup with username: ${username}, fullname: ${firstName} ${lastName}`)
-	if (!username || !password || !firstName || !lastName) return Promise.reject('Missing required signup information')
+	console.log("auth.service:: ", email, firstName, lastName, profileImg, password, role)
 
-	const userExist = await userService.getByEmail(username)
-	if (userExist) return Promise.reject('Username already taken')
+	logger.debug(`auth.service - signup with email: ${email}, fullname: ${firstName} ${lastName}`)
+	if (!email || !password || !firstName || !lastName) return Promise.reject('Missing required signup information')
+
+	const userExist = await userService.getByEmail(email)
+	if (userExist) return Promise.reject('Email already taken')
+
+	const defaultAccount = 'acc001'
 
 	const hash = await bcrypt.hash(password, saltRounds)
-	return userService.add({ username, password: hash, firstName, lastName, isAdmin })
+	return userService.add({ email, password: hash, firstName, lastName, profileImg, role, account: defaultAccount })
 }
 
 function getLoginToken(user) {
-	const userInfo = { 
-        _id: user._id, 
+	const userInfo = {
+		_id: user._id,
 		email: user.email,
-        firstName: user.firstName, 
-        lastName: user.lastName, 
-        isAdmin: user.isAdmin,
-    }
+		firstName: user.firstName,
+		lastName: user.lastName,
+		isAdmin: user.isAdmin,
+	}
 	return cryptr.encrypt(JSON.stringify(userInfo))
 }
 
