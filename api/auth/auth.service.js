@@ -11,6 +11,7 @@ export const authService = {
 	login,
 	getLoginToken,
 	validateToken,
+	googleLogin,
 }
 
 async function login(email, password) {
@@ -28,13 +29,41 @@ async function login(email, password) {
 	return user
 }
 
-async function signup(email, firstName, lastName, profileImg, password, role) {
+
+async function googleLogin(credentials) {
+	const {
+		email,
+		firstName,
+		lastName,
+		profileImg,
+	} = credentials
+
+	logger.debug(`auth.service - google login with email: ${email}`)
+
+	let user = await userService.getByEmail(email)
+	if (!user) {
+		user = await userService.add({
+			email,
+			firstName,
+			lastName,
+			profileImg,
+			role: 'user',
+			isGoogleUser: true
+		})
+	}
+
+	console.log("user: ", user)
+
+	delete user.password
+	user._id = user._id.toString()
+	return user
+}
+
+async function signup(email, firstName, lastName, profileImg, password, role, isGoogleUser) {
 	const saltRounds = 10
 
-	console.log("auth.service:: ", email, firstName, lastName, profileImg, password, role)
-
 	logger.debug(`auth.service - signup with email: ${email}, fullname: ${firstName} ${lastName}`)
-	if (!email || !password || !firstName || !lastName) return Promise.reject('Missing required signup information')
+	if (!email || (!password || isGoogleUser) || !firstName || !lastName) return Promise.reject('Missing required signup information')
 
 	const userExist = await userService.getByEmail(email)
 	if (userExist) return Promise.reject('Email already taken')
@@ -42,7 +71,7 @@ async function signup(email, firstName, lastName, profileImg, password, role) {
 	const defaultAccount = 'acc001'
 
 	const hash = await bcrypt.hash(password, saltRounds)
-	return userService.add({ email, password: hash, firstName, lastName, profileImg, role, account: defaultAccount })
+	return userService.add({ email, password: hash, firstName, lastName, profileImg, role, account: defaultAccount, isGoogleUser })
 }
 
 function getLoginToken(user) {

@@ -97,15 +97,18 @@ async function add(user) {
 	try {
 		const userToAdd = {
 			email: user.email,
-			password: user.password,
+			password: user.password || undefined,
 			firstName: user.firstName,
 			lastName: user.lastName,
 			profileImg: user.profileImg || `https://ui-avatars.com/api/?name=${user.firstName}+${user.lastName}&background=0D8ABC&color=fff&length=2&rounded=true&bold=true`,
 			role: user.role || 'user',
+            isGoogleUser: user.isGoogleUser || false,
             lastViewedBoards: []
 		}
+
 		const collection = await dbService.getCollection('user')
 		await collection.insertOne(userToAdd)
+
 		return userToAdd
 	} catch (err) {
 		logger.error('cannot add user', err)
