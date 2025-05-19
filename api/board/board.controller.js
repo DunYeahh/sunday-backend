@@ -343,3 +343,21 @@ export async function moveTask(req, res) {
 		res.status(400).send({ err: 'Failed to move task' })
 	}
 }
+
+export async function createLog(req, res) {
+	try {
+		const { loggedinUser, body } = req
+		const {logObject} = body
+		const { boardId } = req.params
+		const updatedBoard = await boardService.createLog(logObject, boardId)
+		
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
+	} catch (err) {
+		logger.error('Failed to log activity', err)
+		res.status(400).send({ err: 'Failed to log activity' })
+	}
+}
