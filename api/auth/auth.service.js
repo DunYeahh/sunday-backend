@@ -68,10 +68,8 @@ async function signup(email, firstName, lastName, profileImg, password, role, is
 	const userExist = await userService.getByEmail(email)
 	if (userExist) return Promise.reject('Email already taken')
 
-	const defaultAccount = 'acc001'
-
 	const hash = await bcrypt.hash(password, saltRounds)
-	return userService.add({ email, password: hash, firstName, lastName, profileImg, role, account: defaultAccount, isGoogleUser })
+	return userService.add({ email, password: hash, firstName, lastName, profileImg, role, isGoogleUser })
 }
 
 function getLoginToken(user) {
