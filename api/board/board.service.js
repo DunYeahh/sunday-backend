@@ -28,6 +28,9 @@ export const boardService = {
 	updateColumnValue,
     removeColumnValue,
 	moveTask,
+	createLabel,
+	updateLabel,
+	removeLabel,
 
 }
 
@@ -275,6 +278,71 @@ async function removeColumn(columnId, boardId) {
 		throw err
 	}
 }
+
+async function createLabel(label, columnId, boardId,loggedinUser) {
+	const labelToSave = {
+		id: label.id,
+		name: label?.name,
+		color: label.color
+	}
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne(
+			criteria,
+			{ $push: { "columns.$[column].type.labels": labelToSave } },
+			{ arrayFilters: [{ "column.id": columnId }] }
+		)
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
+	} catch (err) {
+		logger.error(`cannot add label ${label.id}`, err)
+		throw err
+	}
+}
+
+
+async function updateLabel(labelToUpdate, boardId) {
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne(criteria,
+			 { $set: { "columns.$[column].type.labels.$[lbl]": labelToUpdate } },
+			 {
+				arrayFilters: [
+				  { "column.type.labels": { $exists: true } },
+				  { "lbl.id": labelToUpdate.id }
+				]
+			  }
+			)
+
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
+	} catch (err) {
+		logger.error(`cannot update label ${labelToUpdate.id}`, err)
+		throw err
+	}
+}
+
+async function removeLabel(labelId, columnId, boardId) {
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne(criteria, { $pull: { "columns.$[column].type.lables": {id: labelId} }},
+			{ arrayFilters: [{ "column.id": columnId }] })
+
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
+	} catch (err) {
+		logger.error(`cannot remove task ${labelId}`, err)
+		throw err
+	}
+}
+
+// =====================================================================
 
 async function createTask(task, boardId, groupId, isTop, loggedinUser) {
 	const taskToSave = {

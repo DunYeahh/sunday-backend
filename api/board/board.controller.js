@@ -205,6 +205,64 @@ export async function removeColumn(req, res) {
 	}
 }
 
+
+export async function createLabel(req, res) {
+	const { loggedinUser, body } = req
+	const { boardId, columnId } = req.params
+	const label = body.label
+	console.log('body received:', body.label)
+	try {
+		const updatedBoard = await boardService.createLabel(label, columnId, boardId,loggedinUser)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
+	} catch (err) {
+		logger.error('Failed to add label', err)
+		res.status(400).send({ err: 'Failed to add label' })
+	}
+}
+
+
+export async function updateLabel(req, res) {
+	const { loggedinUser, body: { labelToUpdate } } = req
+	const { boardId } = req.params
+    // const { userId: _id, isAdmin } = loggedinUser
+
+	try {
+		const updatedBoard = await boardService.updateLabel(labelToUpdate, boardId)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
+	} catch (err) {
+		logger.error('Failed to update column', err)
+		res.status(400).send({ err: 'Failed to update column' })
+	}
+}
+
+export async function removeLabel(req, res) {
+	try {
+		const { loggedinUser } = req
+		const { boardId, columnId, labelId } = req.params
+		const updatedBoard = await boardService.removeLabel(labelId, columnId, boardId)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+		
+		res.status(200).json(updatedBoard)
+	} catch (err) {
+		logger.error('Failed to remove task', err)
+		res.status(400).send({ err: 'Failed to remove task' })
+	}
+}
+
+
 export async function createTask(req, res) {
 	const { loggedinUser, body } = req
 	const { boardId, groupId } = req.params
