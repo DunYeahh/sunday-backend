@@ -4,6 +4,7 @@ import { requireAuth } from '../../middlewares/requireAuth.middleware.js'
 import { log } from '../../middlewares/logger.middleware.js'
 
 import { getBoards, getBoardById, saveBoards, createBoard, updateBoard, removeBoard, removeGroup, createGroup, updateGroup, createColumn, updateColumn, removeColumn,
+    createLog,
     createTask, removeTask, addTaskUpdate, addColumnValue, updateColumnValue, removeColumnValue, moveTask, 
     createLabel,
     updateLabel,
@@ -22,6 +23,7 @@ router.post('/', createBoard)
 router.put('/:boardId', updateBoard)
 router.put('/boards/reorder', saveBoards)
 router.delete('/:boardId', removeBoard)
+router.put('/:boardId/log', createLog)
 
 ////// GROUP //////
 router.post('/:boardId/group', createGroup)

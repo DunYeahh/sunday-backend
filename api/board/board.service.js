@@ -31,6 +31,7 @@ export const boardService = {
 	createLabel,
 	updateLabel,
 	removeLabel,
+	createLog,
 
 }
 
@@ -413,7 +414,7 @@ async function addColumnValue(value, boardId, groupId, taskId, colId) {
 		value: value
 	}
 
-	console.log('columnValueToSave in add', columnValueToSave)
+	// console.log('columnValueToSave in add', columnValueToSave)
 
 	try {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
@@ -494,6 +495,24 @@ async function moveTask(taskId, boardId, fromGroupId, toGroupId, toIndex) {
 		return updatedBoard
 	} catch (err) {
 		logger.error(`cannot move task ${taskId}`, err)
+		throw err
+	}
+}
+
+async function createLog(logObject, boardId) {
+
+	console.log(boardId)
+
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne(criteria, { $push: { activities: { $each: [logObject], $position: 0 }} })
+
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
+	} catch (err) {
+		logger.error(`cannot log activity ${logObject.id}`, err)
 		throw err
 	}
 }
