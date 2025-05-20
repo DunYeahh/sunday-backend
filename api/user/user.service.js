@@ -94,8 +94,11 @@ async function update(viewedBoardId, userId) {
 }
 
 async function add(user) {
-	try {
+	const defaultAccount = 'acc001'
+    
+    try {
 		const userToAdd = {
+            account: user.account || defaultAccount,
 			email: user.email,
 			password: user.password || undefined,
 			firstName: user.firstName,
