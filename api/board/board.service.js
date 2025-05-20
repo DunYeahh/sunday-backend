@@ -346,7 +346,7 @@ async function addColumnValue(value, boardId, groupId, taskId, colId) {
 		value: value
 	}
 
-	console.log('columnValueToSave in add', columnValueToSave)
+	// console.log('columnValueToSave in add', columnValueToSave)
 
 	try {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }

@@ -294,6 +294,7 @@ export async function updateColumnValue(req, res) {
 	try {
 		const updatedBoard = await boardService.updateColumnValue(value, boardId, groupId, taskId, colId)
 
+		console.log(updatedBoard)
 		if(updatedBoard) {
 			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
 		}
@@ -351,9 +352,9 @@ export async function createLog(req, res) {
 		const { boardId } = req.params
 		const updatedBoard = await boardService.createLog(logObject, boardId)
 		
-		if(updatedBoard) {
-			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
-		}
+		// if(updatedBoard) {
+		// 	socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		// }
 
 		res.status(200).json(updatedBoard)
 	} catch (err) {
