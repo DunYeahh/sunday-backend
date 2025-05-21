@@ -332,7 +332,8 @@ async function removeLabel(labelId, columnId, boardId) {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
 
 		const collection = await dbService.getCollection('board')
-		await collection.updateOne(criteria, { $pull: { "columns.$[column].type.lables": {id: labelId} }},
+		await collection.updateOne(criteria,
+			 { $pull: { "columns.$[column].type.labels": {id: labelId} }},
 			{ arrayFilters: [{ "column.id": columnId }] })
 
 		const updatedBoard = await collection.findOne(criteria)
