@@ -5,7 +5,7 @@ import { log } from '../../middlewares/logger.middleware.js'
 
 import { getBoards, getBoardById, saveBoards, createBoard, updateBoard, removeBoard, removeGroup, createGroup, updateGroup, createColumn, updateColumn, removeColumn,
     createLog,
-    createTask, removeTask, addTaskUpdate, addColumnValue, updateColumnValue, removeColumnValue, moveTask, 
+    createTask, removeTask, addTaskUpdate, removeTaskUpdate, addColumnValue, updateColumnValue, removeColumnValue, moveTask, 
     createLabel,
     updateLabel,
     removeLabel} from './board.controller.js'
@@ -45,6 +45,7 @@ router.delete('/:boardId/column/:columnId/label/:labelId', removeLabel)
 router.post('/:boardId/group/:groupId/task', createTask)
 router.delete('/:boardId/group/:groupId/task/:taskId', removeTask)
 router.post('/:boardId/group/:groupId/task/:taskId/update', addTaskUpdate)
+router.post('/:boardId/group/:groupId/task/:taskId/update/:updateId', removeTaskUpdate)
 router.put('/:boardId/group/:groupId/task/:taskId/columnValue/:colId', updateColumnValue)
 router.post('/:boardId/group/:groupId/task/:taskId/columnValue/:colId', addColumnValue)
 router.delete('/:boardId/group/:groupId/task/:taskId/columnValue/:colId', removeColumnValue)

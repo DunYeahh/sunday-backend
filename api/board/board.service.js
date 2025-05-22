@@ -1,10 +1,8 @@
 import { ObjectId } from 'mongodb'
 
 import { logger } from '../../services/logger.service.js'
-import { makeId } from '../../services/util.service.js'
 import { dbService } from '../../services/db.service.js'
-import { asyncLocalStorage } from '../../services/als.service.js'
-import { updateBoard } from './board.controller.js'
+
 
 const PAGE_SIZE = 3
 
@@ -24,6 +22,7 @@ export const boardService = {
     createTask,
     removeTask,
     addTaskUpdate,
+	removeTaskUpdate,
     addColumnValue,
 	updateColumnValue,
     removeColumnValue,
@@ -386,20 +385,34 @@ async function removeTask(taskId, groupId, boardId) {
 }
 
 async function addTaskUpdate(update, boardId, groupId, taskId) {
-	// console.log(update)
 	const updateToSave = {
 		id: update.id,
 		createdBy: update.createdBy,
 		createdAt: Date.now(),
 		txt: update.txt
 	}
-	// console.log(updateToSave)
 
 	try {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
 
 		const collection = await dbService.getCollection('board')
 		await collection.updateOne( criteria, { $push: { "groups.$[group].tasks.$[task].updates": {$each: [updateToSave], $position: 0 }}}, {arrayFilters: [{ "group.id": groupId}, {"task.id": taskId }]}) 
+
+		const updatedBoard = await collection.findOne(criteria)
+		return updatedBoard
+	} catch (err) {
+		logger.error(`cannot send update ${update.id}`, err)
+		throw err
+	}
+}
+
+async function removeTaskUpdate(updateId, boardId, groupId, taskId) {
+
+	try {
+		const criteria = { _id: ObjectId.createFromHexString(boardId) }
+
+		const collection = await dbService.getCollection('board')
+		await collection.updateOne( criteria, { $pull: { "groups.$[group].tasks.$[task].updates": {id: updateId}}}, {arrayFilters: [{ "group.id": groupId}, {"task.id": taskId }]}) 
 
 		const updatedBoard = await collection.findOne(criteria)
 		return updatedBoard

@@ -306,13 +306,27 @@ export async function addTaskUpdate(req, res) {
 	const { loggedinUser, body } = req
 	const { boardId, groupId, taskId } = req.params
 	const update = body.update
-	console.log('boardId: ', boardId)
-	console.log('groupId: ', groupId)
-	console.log('taskId: ', taskId)
-	console.log('update: ', update)
 
 	try {
 		const updatedBoard = await boardService.addTaskUpdate(update, boardId, groupId, taskId)
+
+		if(updatedBoard) {
+			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
+		}
+
+		res.status(200).json(updatedBoard)
+	} catch (err) {
+		logger.error('Failed to send update', err)
+		res.status(400).send({ err: 'Failed to send update' })
+	}
+}
+
+export async function removeTaskUpdate(req, res) {
+	const { loggedinUser, body } = req
+	const { boardId, groupId, taskId, updateId } = req.params
+
+	try {
+		const updatedBoard = await boardService.removeTaskUpdate(updateId, boardId, groupId, taskId)
 
 		if(updatedBoard) {
 			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
