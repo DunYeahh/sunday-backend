@@ -22,7 +22,7 @@ async function _connect() {
 	if (dbConn) return dbConn
     
 	try {
-		const client = await MongoClient.connect('mongodb+srv://Dana:Danonne601@cluster0.hbia4xy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+		const client = await MongoClient.connect(config.dbURL)
 		// const client = await MongoClient.connect('mongodb://localhost:27017')
 		return dbConn = client.db('boardDB')
 	} catch (err) {
