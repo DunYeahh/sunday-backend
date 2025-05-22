@@ -326,7 +326,7 @@ export async function removeTaskUpdate(req, res) {
 	const { boardId, groupId, taskId, updateId } = req.params
 
 	try {
-		const updatedBoard = await boardService.removeTaskUpdate(updateId, boardId, groupId, taskId)
+		const updatedBoard = await boardService.removeTaskUpdate(updateId, boardId, groupId, taskId, loggedinUser)
 
 		if(updatedBoard) {
 			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})

@@ -406,12 +406,29 @@ async function addTaskUpdate(update, boardId, groupId, taskId) {
 	}
 }
 
-async function removeTaskUpdate(updateId, boardId, groupId, taskId) {
+async function removeTaskUpdate(updateId, boardId, groupId, taskId, loggedinUser) {
 
 	try {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
 
 		const collection = await dbService.getCollection('board')
+		const board = await collection.findOne(criteria)
+		if (!board) throw new Error('Board not found')
+
+		const group = board.groups.find(g => g.id === groupId)
+		if (!group) throw new Error('Group not found')
+
+		const task = group.tasks.find(t => t.id === taskId)
+		if (!task) throw new Error('Task not found')
+
+		const update = task.updates.find(u => u.id === updateId)
+		if (!update) throw new Error('Update not found')
+
+		if (update.createdBy !== loggedinUser._id) {
+		throw new Error('Unauthorized: Cannot delete someone else\'s update')
+		}
+
+		
 		await collection.updateOne( criteria, { $pull: { "groups.$[group].tasks.$[task].updates": {id: updateId}}}, {arrayFilters: [{ "group.id": groupId}, {"task.id": taskId }]}) 
 
 		const updatedBoard = await collection.findOne(criteria)
