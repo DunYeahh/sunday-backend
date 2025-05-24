@@ -77,8 +77,6 @@ export async function removeBoard(req, res) {
 
 export async function updateBoard(req, res) {
 	const { loggedinUser, body: board } = req
-	console.log(board)
-    // const { userId: _id, isAdmin } = loggedinUser
 
 	try {
 		const updatedBoard = await boardService.update(board)
