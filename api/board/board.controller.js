@@ -96,10 +96,11 @@ export async function createGroup(req, res) {
 	const { loggedinUser, body } = req
 	const { boardId } = req.params
 	const isTop = body.isTop
+	const idx = body.idx
 	const group = body.group
 	
 	try {
-		const updatedBoard = await boardService.createGroup(group, boardId, isTop, loggedinUser)
+		const updatedBoard = await boardService.createGroup(group, boardId, isTop, idx, loggedinUser)
 
 		if(updatedBoard) {
 			socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})

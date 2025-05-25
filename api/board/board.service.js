@@ -169,7 +169,7 @@ async function update(board) {
 	}
 }
 
-async function createGroup(group, boardId, isTop, loggedinUser) {
+async function createGroup(group, boardId, isTop, idx, loggedinUser) {
 	const groupToSave = {
 		id: group.id,
 		name: group.name,
@@ -184,7 +184,19 @@ async function createGroup(group, boardId, isTop, loggedinUser) {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
 
 		const collection = await dbService.getCollection('board')
-		isTop ? await collection.updateOne(criteria, { $push: { groups: { $each: [groupToSave], $position: 0 }} }) : await collection.updateOne(criteria, { $push: { groups: groupToSave } })
+		if (isTop) {
+		await collection.updateOne(criteria, {
+			$push: { groups: { $each: [groupToSave], $position: 0 } }
+		})
+		} else if (idx !== null && typeof idx === 'number') {
+		await collection.updateOne(criteria, {
+			$push: { groups: { $each: [groupToSave], $position: idx + 1 } }
+		})
+		} else {
+		await collection.updateOne(criteria, {
+			$push: { groups: groupToSave }
+		})
+		}
 
 		const updatedBoard = await collection.findOne(criteria)
 		return updatedBoard
