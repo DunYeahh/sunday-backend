@@ -17,7 +17,7 @@ export const authService = {
 async function login(email, password) {
 	logger.debug(`auth.service - login with email: ${email}`)
 
-	const user = await userService.getByEmail(email)
+	const user = await userService.getByEmail(email.toLowerCase())
 	if (!user) return Promise.reject('Invalid email or password')
 
 	// TODO: un-comment for real login
@@ -65,11 +65,11 @@ async function signup(email, firstName, lastName, profileImg, password, role, is
 	logger.debug(`auth.service - signup with email: ${email}, fullname: ${firstName} ${lastName}`)
 	if (!email || (!password || isGoogleUser) || !firstName || !lastName) return Promise.reject('Missing required signup information')
 
-	const userExist = await userService.getByEmail(email)
+	const userExist = await userService.getByEmail(email.toLowerCase())
 	if (userExist) return Promise.reject('Email already taken')
 
-	const hash = await bcrypt.hash(password, saltRounds)
-	return userService.add({ email, password: hash, firstName, lastName, profileImg, role, isGoogleUser })
+	const hash = isGoogleUser ? null : await bcrypt.hash(password, saltRounds)
+	return userService.add({ email: email.toLowerCase(), password: hash, firstName, lastName, profileImg, role, isGoogleUser })
 }
 
 function getLoginToken(user) {

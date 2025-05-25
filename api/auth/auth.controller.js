@@ -56,6 +56,7 @@ export async function googleAuth(req, res) {
 
 export async function signup(req, res) {
 	try {
+		console.log('hi')
 		const { email, firstName, lastName, profileImg, password, role } = req.body
 
 		// Never log passwords
