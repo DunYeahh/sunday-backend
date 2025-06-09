@@ -1,6 +1,7 @@
 import {dbService} from '../../services/db.service.js'
 import {logger} from '../../services/logger.service.js'
 import { ObjectId } from 'mongodb'
+import { makeId } from '../../services/util.service.js'
 
 export const userService = {
 	add, 
@@ -94,11 +95,12 @@ async function update(viewedBoardId, userId) {
 }
 
 async function add(user) {
-	const defaultAccount = 'acc002'
+
+    logger.debug(`user.service - add user: ${user.email}`)
     
     try {
 		const userToAdd = {
-            account: user.account || defaultAccount,
+            account: user.account || makeId(),
 			email: user.email,
 			password: user.password || undefined,
 			firstName: user.firstName,
