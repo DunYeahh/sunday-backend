@@ -1,6 +1,7 @@
 import { logger } from '../../services/logger.service.js'
 import { socketService } from '../../services/socket.service.js'
 import { boardService } from './board.service.js'
+import { generateAIBoard } from './generateAI/aiBoardGenerator.js'
 
 export async function getBoards(req, res) {
 	const { loggedinUser } = req
@@ -55,6 +56,19 @@ export async function createBoard(req, res) {
 	} catch (err) {
 		logger.error('Failed to add board', err)
 		res.status(400).send({ err: 'Failed to add board' })
+	}
+}
+
+export async function generateAiBoard(req, res) {
+	const { body } = req
+	const { userPrompt, boardName, user } = body
+
+	try {
+		const generatedBoard = await generateAIBoard(userPrompt, boardName, user)
+		res.json(generatedBoard)
+	} catch (err) {
+		logger.error('Failed to generate board', err)
+		res.status(400).send({ err: 'Failed to generate board' })
 	}
 }
 

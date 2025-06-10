@@ -3,7 +3,7 @@ import express from 'express'
 import { requireAuth } from '../../middlewares/requireAuth.middleware.js'
 import { log } from '../../middlewares/logger.middleware.js'
 
-import { getBoards, getBoardById, saveBoards, createBoard, updateBoard, removeBoard, removeGroup, createGroup, updateGroup, createColumn, updateColumn, removeColumn,
+import { getBoards, getBoardById, saveBoards, createBoard, generateAiBoard, updateBoard, removeBoard, removeGroup, createGroup, updateGroup, createColumn, updateColumn, removeColumn,
     createLog,
     createTask, removeTask, addTaskUpdate, removeTaskUpdate, addColumnValue, updateColumnValue, removeColumnValue, moveTask, 
     createLabel,
@@ -20,6 +20,7 @@ router.use(log, requireAuth)
 router.get('/mini', getBoards)
 router.get('/:boardId', getBoardById)
 router.post('/', createBoard)
+router.post('/ai', generateAiBoard)
 router.put('/:boardId', updateBoard)
 router.put('/boards/reorder', saveBoards)
 router.delete('/:boardId', removeBoard)

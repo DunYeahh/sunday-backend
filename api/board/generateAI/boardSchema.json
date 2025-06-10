@@ -1,0 +1,363 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Board",
+  "type": "object",
+  "required": [
+    "columns",
+    "groups",
+    "createdAt",
+    "account",
+    "createdBy"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "activities": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "columns": {
+      "type": "array",
+      "items": [
+        {
+          "$ref": "#/definitions/itemColumn"
+        }
+      ],
+      "additionalItems": {
+        "$ref": "#/definitions/otherColumn"
+      }
+    },
+    "groups": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/group"
+      }
+    },
+    "isStarred": {
+      "type": "boolean"
+    },
+    "pos": {
+      "type": "integer"
+    },
+    "account": {
+      "type": "string"
+    },
+    "createdBy": {
+      "type": "string"
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/member"
+      }
+    },
+    "createdAt": {
+      "$ref": "#/definitions/timestamp"
+    }
+  },
+  "definitions": {
+    "timestamp": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "color": {
+      "type": "string",
+      "enum": [
+        "grass_green",
+        "done-green",
+        "bright-green",
+        "saladish",
+        "egg_yolk",
+        "working_orange",
+        "dark-orange",
+        "peach",
+        "sunset",
+        "stuck-red",
+        "dark-red",
+        "sofia_pink",
+        "lipstick",
+        "bubble",
+        "purple",
+        "dark_purple",
+        "berry",
+        "dark_indigo",
+        "indigo",
+        "navy",
+        "bright-blue",
+        "blue",
+        "dark-blue",
+        "aquamarine",
+        "chili-blue",
+        "river",
+        "winter",
+        "explosive",
+        "american_gray",
+        "blackish",
+        "brown",
+        "orchid",
+        "tan",
+        "sky",
+        "coffee",
+        "royal",
+        "teal",
+        "lavender",
+        "steel",
+        "lilac",
+        "pecan"
+      ]
+    },
+    "itemColumn": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "col-item"
+        },
+        "name": {
+          "const": "Task"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "width": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "object",
+          "required": [
+            "variant"
+          ],
+          "properties": {
+            "variant": {
+              "const": "item"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "otherColumn": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "not": {
+            "const": "col-item"
+          }
+        },
+        "name": {
+          "type": "string"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "width": {
+          "type": "integer"
+        },
+        "type": {
+          "type": "object",
+          "required": [
+            "variant"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "variant": {
+              "type": "string",
+              "enum": [
+                "status",
+                "people",
+                "date",
+                "text",
+                "number",
+                "file"
+              ]
+            },
+            "labels": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/statusLabel"
+              }
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "variant": {
+                    "const": "status"
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "labels"
+                ]
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "variant": {
+                    "not": {
+                      "const": "status"
+                    }
+                  }
+                }
+              },
+              "then": {
+                "not": {
+                  "required": [
+                    "labels"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "statusLabel": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "color"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "color": {
+          "$ref": "#/definitions/color"
+        },
+        "isHappyLabel": {
+          "type": "boolean"
+        }
+      }
+    },
+    "group": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "tasks"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "color": {
+          "$ref": "#/definitions/color"
+        },
+        "isCollapsed": {
+          "type": "boolean"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/task"
+          }
+        }
+      }
+    },
+    "task": {
+      "type": "object",
+      "required": [
+        "id",
+        "columnValues"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "createdAt": {
+          "$ref": "#/definitions/timestamp"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "columnValues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/columnValue"
+          }
+        },
+        "updates": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    },
+    "columnValue": {
+      "type": "object",
+      "required": [
+        "colId",
+        "value"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "colId": {
+          "type": "string"
+        },
+        "value": {}
+      }
+    },
+    "member": {
+      "type": "object",
+      "required": [
+        "_id",
+        "permission"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "_id": {
+          "type": "string"
+        },
+        "permission": {
+          "type": "string",
+          "enum": [
+            "viewer",
+            "editor",
+            "admin"
+          ]
+        }
+      }
+    }
+  }
+}
