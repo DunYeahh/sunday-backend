@@ -130,7 +130,6 @@ export async function createGroup(req, res) {
 export async function updateGroup(req, res) {
 	const { loggedinUser, body: { group } } = req
 	const { boardId ,groupId } = req.params
-    // const { userId: _id, isAdmin } = loggedinUser
 
 	try {
 		const updatedBoard = await boardService.updateGroup(group, boardId, groupId)
@@ -185,7 +184,6 @@ export async function createColumn(req, res) {
 export async function updateColumn(req, res) {
 	const { loggedinUser, body: { column } } = req
 	const { boardId } = req.params
-    // const { userId: _id, isAdmin } = loggedinUser
 
 	try {
 		const updatedBoard = await boardService.updateColumn(column, boardId)
@@ -218,12 +216,11 @@ export async function removeColumn(req, res) {
 	}
 }
 
-
 export async function createLabel(req, res) {
 	const { loggedinUser, body } = req
 	const { boardId, columnId } = req.params
 	const label = body.label
-	console.log('body received:', body.label)
+
 	try {
 		const updatedBoard = await boardService.createLabel(label, columnId, boardId,loggedinUser)
 
@@ -238,11 +235,9 @@ export async function createLabel(req, res) {
 	}
 }
 
-
 export async function updateLabel(req, res) {
 	const { loggedinUser, body: { labelToUpdate } } = req
 	const { boardId } = req.params
-    // const { userId: _id, isAdmin } = loggedinUser
 
 	try {
 		const updatedBoard = await boardService.updateLabel(labelToUpdate, boardId)
@@ -281,8 +276,6 @@ export async function createTask(req, res) {
 	const { boardId, groupId } = req.params
 	const isTop = body.isTop
 	const task = body.task
-	console.log('groupId: ', groupId)
-	console.log('boardId: ', boardId)
 
 	try {
 		const updatedBoard = await boardService.createTask(task, boardId, groupId, isTop, loggedinUser)
@@ -335,7 +328,7 @@ export async function addTaskUpdate(req, res) {
 }
 
 export async function removeTaskUpdate(req, res) {
-	const { loggedinUser, body } = req
+	const { loggedinUser } = req
 	const { boardId, groupId, taskId, updateId } = req.params
 
 	try {
@@ -393,7 +386,7 @@ export async function updateColumnValue(req, res) {
 
 export async function removeColumnValue(req, res) {
 
-	const { loggedinUser, body } = req
+	const { loggedinUser } = req
 	const { boardId, groupId, taskId, colId } = req.params
 
 	try {
@@ -432,14 +425,10 @@ export async function moveTask(req, res) {
 
 export async function createLog(req, res) {
 	try {
-		const { loggedinUser, body } = req
+		const { body } = req
 		const {logObject} = body
 		const { boardId } = req.params
 		const updatedBoard = await boardService.createLog(logObject, boardId)
-		
-		// if(updatedBoard) {
-		// 	socketService.broadcast({ type:'board-update', data: updatedBoard, userId: loggedinUser._id})
-		// }
 
 		res.status(200).json(updatedBoard)
 	} catch (err) {

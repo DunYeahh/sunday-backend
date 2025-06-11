@@ -30,7 +30,7 @@ async function query(filterBy = {}) {
     }
 }
 
-async function getById(userId) {//filter last visited boards based on date
+async function getById(userId) {
     try {
 
         const collection = await dbService.getCollection('user')

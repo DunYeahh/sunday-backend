@@ -3,9 +3,6 @@ import { ObjectId } from 'mongodb'
 import { logger } from '../../services/logger.service.js'
 import { dbService } from '../../services/db.service.js'
 
-
-const PAGE_SIZE = 3
-
 export const boardService = {
 	query,
 	getById,
@@ -31,7 +28,6 @@ export const boardService = {
 	updateLabel,
 	removeLabel,
 	createLog,
-
 }
 
 async function query(account) {
@@ -457,8 +453,6 @@ async function addColumnValue(value, boardId, groupId, taskId, colId) {
 		value: value
 	}
 
-	// console.log('columnValueToSave in add', columnValueToSave)
-
 	try {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
 
@@ -479,7 +473,6 @@ async function updateColumnValue(value, boardId, groupId, taskId, colId) {
 		colId: colId,
 		value: value
 	}
-		// console.log('columnValueToSave in update', columnValueToSave)
 
 	try {
 		const criteria = { _id: ObjectId.createFromHexString(boardId) }
@@ -568,7 +561,3 @@ function _buildCriteria(filterBy) {
 	return criteria
 }
 
-function _buildSort(filterBy) {
-	if (!filterBy.sortField) return {}
-	return { [filterBy.sortField]: filterBy.sortDir }
-}

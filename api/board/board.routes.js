@@ -4,17 +4,11 @@ import { requireAuth } from '../../middlewares/requireAuth.middleware.js'
 import { log } from '../../middlewares/logger.middleware.js'
 
 import { getBoards, getBoardById, saveBoards, createBoard, generateAiBoard, updateBoard, removeBoard, removeGroup, createGroup, updateGroup, createColumn, updateColumn, removeColumn,
-    createLog,
-    createTask, removeTask, addTaskUpdate, removeTaskUpdate, addColumnValue, updateColumnValue, removeColumnValue, moveTask, 
-    createLabel,
-    updateLabel,
-    removeLabel} from './board.controller.js'
+    createLog, createTask, removeTask, addTaskUpdate, removeTaskUpdate, addColumnValue, updateColumnValue, removeColumnValue, moveTask, 
+    createLabel, updateLabel, removeLabel} from './board.controller.js'
 
 const router = express.Router()
 router.use(log, requireAuth)
-
-// We can add a middleware for the entire router:
-// router.use(requireAuth)
 
 ////// BOARD //////
 router.get('/mini', getBoards)
