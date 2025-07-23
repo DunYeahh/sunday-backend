@@ -3,7 +3,6 @@ import { logger } from '../../services/logger.service.js'
 import { OAuth2Client } from 'google-auth-library'
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
-// const client = new OAuth2Client('198663761522-osnjd48065j34p2k59162s0hg0trvvp9.apps.googleusercontent.com')
 
 export async function login(req, res) {
 	const { email, password } = req.body

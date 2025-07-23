@@ -133,20 +133,19 @@ Return raw JSON only – no markdown fences, no wrapper object
         ]
     });
 
-    const raw = choices[0].message.content;
+    const raw = choices[0].message.content
 
     // Log raw and pretty and answer:
-    console.log("%c🟡 Raw JSON string from OpenAI ↓", "color:orange;font-weight:bold");
+    console.log("%c🟡 Raw JSON string from OpenAI ↓", "color:orange;font-weight:bold")
     console.log(raw);
     try {
-        const pretty = JSON.stringify(JSON.parse(raw), null, 2);
-        // console.log("%c🟢 Pretty-printed preview ↓", "color:green;font-weight:bold");
-        // console.log(pretty);
+        const pretty = JSON.stringify(JSON.parse(raw), null, 2)
+
     } catch (err) {
-        console.warn("Raw output was not valid JSON:", err);
+        console.warn("Raw output was not valid JSON:", err)
     }
 
-    const board = JSON.parse(raw);
+    const board = JSON.parse(raw)
 
 
     /* ---------- Validations and formatting of the board" ---------- */
@@ -163,19 +162,19 @@ Return raw JSON only – no markdown fences, no wrapper object
     ]);
 
     function fixColour(col) {
-        return allowedColours.has(col) ? col : "tan";
+        return allowedColours.has(col) ? col : "tan"
     }
 
     // group colors
     board.groups.forEach(g => {
-        g.color = fixColour(g.color);
+        g.color = fixColour(g.color)
     });
 
     // status-label colors
     board.columns.forEach(col => {
         if (col.type.variant === "status" && Array.isArray(col.type.labels)) {
             col.type.labels.forEach(lbl => {
-                lbl.color = fixColour(lbl.color);
+                lbl.color = fixColour(lbl.color)
             });
         }
     });
@@ -183,14 +182,14 @@ Return raw JSON only – no markdown fences, no wrapper object
 
 
     //build board basic info + createdby:
-    board.name = boardName;
-    board.account = userAccount;
-    board.createdBy = userId;
-    board.createdAt = Date.now();
+    board.name = boardName
+    board.account = userAccount
+    board.createdBy = userId
+    board.createdAt = Date.now()
 
     board.columns.forEach(c => (c.createdBy = userId));
     board.groups.forEach(g => {
-        g.createdBy = userId;
+        g.createdBy = userId
         g.tasks.forEach(t => (t.createdBy = userId));
     });
 
@@ -214,9 +213,9 @@ Return raw JSON only – no markdown fences, no wrapper object
     /*  Validate ░ */
     const ajv = new Ajv({ allErrors: true, strict: false })
     addFormats(ajv)
-    const validate = ajv.compile(boardSchema);
+    const validate = ajv.compile(boardSchema)
     if (!validate(board)) {
-        console.error(validate.errors);
+        console.error(validate.errors)
         throw new Error("🛑 Generated board failed schema validation")
     }
 
@@ -229,11 +228,11 @@ Return raw JSON only – no markdown fences, no wrapper object
 
             t.columnValues.forEach(v => {
                 if (["people", "file"].includes(colVariant[v.colId]) && v.value !== "")
-                    throw new Error(`Task ${t.id} must not have value for ${colVariant[v.colId]} column ${v.colId}`);
+                    throw new Error(`Task ${t.id} must not have value for ${colVariant[v.colId]} column ${v.colId}`)
             });
         })
     );
 
-    console.log("✅ board:", board);
-    return board;          // ready to POST to backend
+    console.log("✅ board:", board)
+    return board
 }
